@@ -224,6 +224,11 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
                 bindingGraphFactory,
                 componentGenerator,
                 bindingGraphPlugins);
+
+    SymEncValidator symEncValidator = new SymEncValidator(elements, types);
+    SymEncGenerator symEncGenerator = new SymEncGenerator(filer, types, elements);
+    SymEncProssingStep symEncProssingStep = new SymEncProssingStep(symEncGenerator,symEncValidator, messager, elements, types);
+
     return ImmutableList.of(
         new MapKeyProcessingStep(
             messager, types, mapKeyValidator, annotationCreatorGenerator, unwrappedMapKeyGenerator),
@@ -244,7 +249,9 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             productionBindingFactory,
             producerFactoryGenerator),
         componentProcessingStep,
-        new BindingMethodProcessingStep(messager, anyBindingMethodValidator));
+        new BindingMethodProcessingStep(messager, anyBindingMethodValidator),
+            symEncProssingStep
+            );
   }
 
   @Override
