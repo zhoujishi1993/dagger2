@@ -24,7 +24,7 @@ public class SymEncValidator {
 
 
     static final String NO_SUCH_PAPR = "no such parameter %s for %s";
-    static final String INSECURE_BLOCK_MODE = "in secure block mode ECB for encryption, please use CBC instead";
+    static final String INSECURE_BLOCK_MODE = "insecure block mode ECB for encryption, please use CBC instead";
 
     public SymEncValidator(DaggerElements elements, Types types) {
         this.elements = elements;
@@ -76,5 +76,10 @@ public class SymEncValidator {
         return builder.build();
     }
 
+
+
+    public ValidationReport<TypeElement> validateModuleClass(TypeElement typeElement){
+
+    }
 
 }

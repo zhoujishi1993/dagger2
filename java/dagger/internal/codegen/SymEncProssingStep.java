@@ -76,16 +76,16 @@ public class SymEncProssingStep implements BasicAnnotationProcessor.ProcessingSt
                         //need to check if there are module present, any way provides method check shall be available
 
                         //deal with method parameter
-                        //notice we assume that methods are annotated with Provides annotation
+                        //notice we assume that methods are annotated with Provides annotation and there shall be no more than one method return that type
+                        TypeMirror secretKey = daggerElements.getTypeElement("javax.crypto.SecretKey").asType();
+                        TypeMirror ivParameter = daggerElements.getTypeElement("javax.crypto.spec.IvParameterSpec").asType();
                         for(ExecutableElement executableElement : methodsIn(typeElement.getEnclosedElements())){
                             if(MoreElements.isAnnotationPresent(executableElement, Provides.class)){
                                 TypeMirror returnType = executableElement.getReturnType();
-                                TypeMirror secretKey = daggerElements.getTypeElement("javax.crypto.SecretKey").asType();
-                                TypeMirror ivParameter = daggerElements.getTypeElement("javax.crypto.spec.ivParameterSpec").asType();
                                 if(daggerTypes.isSameType(returnType, secretKey)){
-                                    paraBuilder.setKeyMethodName(Optional.of(executableElement.getSimpleName()));
+                                    paraBuilder = paraBuilder.setKeyMethodName(Optional.of(executableElement.getSimpleName()));
                                 }else if(daggerTypes.isSameType(returnType, ivParameter)){
-                                    paraBuilder.setIvParameterMethodName(Optional.of(executableElement.getSimpleName()));
+                                    paraBuilder = paraBuilder.setIvParameterMethodName(Optional.of(executableElement.getSimpleName()));
                                 }
                             }
                         }

@@ -54,10 +54,18 @@ public class SymEncGenerator extends SourceFileGenerator<SymEncPara> {
         addField(builder, "javax.crypto", "Cipher", "cipher", Modifier.PRIVATE);
         builder.addField(FieldSpec.builder(nameGeneratedType(input), "instance", Modifier.PRIVATE, Modifier.STATIC, Modifier.VOLATILE).build());
         builder.addField(FieldSpec.builder(ClassName.get("java.lang", "Object"), "syn").addModifiers(Modifier.PRIVATE,Modifier.STATIC).initializer(makeNewBlock(CodeBlock.of("$L", ClassName.get("java.lang", "Object")), Optional.empty())).build());
+        if(hasMethodPara(input)){
+            ClassName thisClass = ClassName.get(input.typeElement());
+            builder.addField(FieldSpec.builder(thisClass, "enc", Modifier.PRIVATE).initializer(makeNewBlock(CodeBlock.of("$L", thisClass), Optional.empty())).build());
+        }
     }
 
     private void addField(TypeSpec.Builder builder, String packageName, String simpleName, String fieldName, Modifier... modifiers){
         builder.addField(FieldSpec.builder(ClassName.get(packageName, simpleName), fieldName).addModifiers(modifiers).build());
+    }
+
+    private static boolean hasMethodPara(SymEncPara input){
+        return input.ivParameterMethodName().isPresent() | input.keyMethodName().isPresent();
     }
 
 
@@ -81,8 +89,8 @@ public class SymEncGenerator extends SourceFileGenerator<SymEncPara> {
 
     private void addAssignSecretKeyStatement(CodeBlock.Builder builder, SymEncPara input){
         if(input.keyMethodName().isPresent()){
-            String getKeyMethodName = input.className() + "_" + input.keyMethodName().get() + "Factory";
-            addStatement(builder, makeAssignThisBlock("secretKey", makeInvokeCodeBlock(makeInvokeCodeBlock(CodeBlock.of("$L", getKeyMethodName), "create", Optional.of(CodeBlock.of("enc"))), "get", Optional.empty())));
+            String getKeyMethodName = input.className() + "_" + upperFirstLetter(input.keyMethodName().get().toString()) + "Factory";
+            addStatement(builder, makeAssignThisBlock("secretKey", makeInvokeCodeBlock(makeInvokeCodeBlock(CodeBlock.of("$L", upperFirstLetter(getKeyMethodName)), "create", Optional.of(CodeBlock.of("enc"))), "get", Optional.empty())));
         }else{
             addStatement(builder, makeAssignBlock(ClassName.get("javax.crypto", "KeyGenerator"),"keyGenerator", makeInvokeCodeBlock(CodeBlock.of("$L", "KeyGenerator"), "getInstance", Optional.of(CodeBlock.of("\"$L\"", input.algorithm())))));
             addStatement(builder, makeInvokeCodeBlock(CodeBlock.of("$L","keyGenerator"), "init", Optional.of(CodeBlock.of("$L", String.valueOf(input.keySize())))));
@@ -92,10 +100,19 @@ public class SymEncGenerator extends SourceFileGenerator<SymEncPara> {
 
     private void addAssignIvParameterSpecStatement(CodeBlock.Builder builder, SymEncPara input){
         if(input.ivParameterMethodName().isPresent()){
-            String getIvMethodName = input.className() + "_" + input.ivParameterMethodName().get() + "Factory";
+            String getIvMethodName = input.className() + "_" + upperFirstLetter(input.ivParameterMethodName().get().toString()) + "Factory";
             addStatement(builder, makeAssignThisBlock("ivParameterSpec", makeInvokeCodeBlock(makeInvokeCodeBlock(CodeBlock.of("$L", getIvMethodName), "create", Optional.of(CodeBlock.of("enc"))), "get", Optional.empty())));
         }else{
             addStatement(builder, makeAssignThisBlock("ivParameterSpec", makeNewBlock(CodeBlock.of("$T", ClassName.get("javax.crypto.spec", "IvParameterSpec")), Optional.of(makeInvokeCodeBlock(CodeBlock.of("$L", "secureRandom"), "generateSeed", Optional.of(CodeBlock.of("16")))))));
+        }
+    }
+
+    private String upperFirstLetter(String str){
+        if(str.length() > 0){
+            Character c = str.charAt(0);
+            return Character.toUpperCase(c) + str.substring(1);
+        }else{
+            return str;
         }
     }
 
